@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS user_gifs (
+  id INTEGER PRIMARY KEY NOT NULL,
+  user_id INTEGER NOT NULL,
+  server_id INTEGER,
+  gif_url, TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
