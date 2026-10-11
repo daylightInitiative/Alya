@@ -27,6 +27,8 @@ class CustomFormatter(logging.Formatter):
         formatter = self._formatters.get(record.levelno, self._default_formatter)
         return formatter.format(record)
 
+def getMainLogger() -> logging.Logger:
+    return logging.getLogger(app_config.loggerAlias)
 
 def setup_logger(log):
     log.setLevel(app_config.console_log_level) 

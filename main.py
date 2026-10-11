@@ -1,9 +1,10 @@
 import logging
 import os
+import asyncio
 import platform
 import random
 
-import aiosqlite
+from dbmanager import DBManager
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
@@ -12,13 +13,13 @@ from dotenv import load_dotenv
 from constants import *
 
 from config import app_config
-from logFormat import setup_logger
+from logFormat import getMainLogger, setup_logger
 
 load_dotenv()
 
-log = logging.getLogger() 
+log = getMainLogger()
 setup_logger(log)
-log.info("Initializing...")
+log.info("Starting discord bot")
 
 intents = discord.Intents.default()
 
@@ -29,16 +30,16 @@ class DiscordBot(commands.Bot):
             intents=intents,
             help_command=None,
         )
+        self.loggerName = app_config.loggerAlias
         self.log = log
-        self.database = None
+        self.db = DBManager(app_config)
         self.bot_prefix = app_config.bot_prefix
 
     async def init_db(self) -> None:
-        self.log.debug("Using database file: %s", DB_FILE)
-        async with aiosqlite.connect(DB_FILE) as db:
-            with open(SCHEMA_FILE, encoding="utf-8") as file:
-                await db.executescript(file.read())
-            await db.commit()
+        self.log.debug("Using database file: %s", app_config.db_filename)
+        await self.db.initialize()
+        with open(SCHEMA_FILE, encoding="utf-8") as file:
+            await self.db.executescript(file.read())
 
     async def load_cogs(self) -> None:
         for file in os.listdir(f"{os.path.realpath(os.path.dirname(__file__))}/cogs"):
@@ -149,7 +150,20 @@ class DiscordBot(commands.Bot):
         else:
             raise error
 
-bot = DiscordBot()
-
 # log_handler=None protects custom logger settings from being overridden
-bot.run(os.getenv("BOT_TOKEN"), log_handler=None)
+async def main():
+
+    bot = DiscordBot()
+    async with bot:
+        try:
+            await bot.start(os.getenv("BOT_TOKEN"))
+        finally:
+            log.info("Closing database connection...")
+            await bot.db.close() # important to clean this up
+
+if __name__ == "__main__":
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nBot is shutting down...")

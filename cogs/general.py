@@ -1,9 +1,12 @@
 import platform
 import random
-import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
+from logFormat import getMainLogger
+from timer import TimeConverter, duration_to_string
+
+log = getMainLogger()
 
 class FeedbackForm(discord.ui.Modal, title="Feedback"):
     feedback = discord.ui.TextInput(
@@ -22,6 +25,7 @@ class FeedbackForm(discord.ui.Modal, title="Feedback"):
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.db = bot.db
         
         self.remove_spoilers_menu = app_commands.ContextMenu(
             name="Remove spoilers",
@@ -60,6 +64,14 @@ class General(commands.Cog, name="general"):
     def cog_unload(self) -> None:
         self.bot.tree.remove_command(self.remove_spoilers_menu.name, type=self.remove_spoilers_menu.type)
         self.bot.tree.remove_command(self.grab_id_menu.name, type=self.grab_id_menu.type)
+
+    # @commands.hybrid_command(
+    #     name="Shutdown", description="Internal command for shutting down the bot."
+    # )
+    # @commands.is_owner()
+    # async def shutdown(self, context) -> None:
+    #     await context.send("Shutting down...")
+    #     await bot.close() need to implement this correctly, maybe even a restart functionality with cog status streams
 
     @commands.hybrid_command(
         name="help", description="List all commands the bot has loaded."
@@ -146,6 +158,20 @@ class General(commands.Cog, name="general"):
             color=0xBEBEFE,
         )
         await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="timer",
+        description="Creates a timer given a duration, you will be mentioned after the timer has expired.",
+    )
+    async def timer(self, context, duration: TimeConverter) -> None:
+        display_time = duration_to_string(total_seconds=duration)
+        embed = discord.Embed(
+            title="Timer set",
+            description=f"Set a timer for {display_time}. We will mention you when it has concluded.",
+            color=0xBEBEFE,
+        )
+        await context.send(embed=embed)
+
 
     @commands.hybrid_command(
         name="server",

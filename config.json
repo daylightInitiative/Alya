@@ -2,5 +2,8 @@
     "file_log_level": "INFO",
     "console_log_level": "DEBUG",
 
+    "db_filename": "database.db",
+    "loggerAlias": "Alya",
+
     "bot_prefix": "~"
 }

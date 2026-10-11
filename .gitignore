@@ -3,7 +3,7 @@ certs/
 data/
 
 # database
-database/*.db
+database/**/*.db
 
 *.env
 .vscode/
